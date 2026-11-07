@@ -47,7 +47,12 @@ function update(){
  el('slResult').textContent=valid?sl.toFixed(2):'Invalid setup';
  el('slNote').textContent=valid?note:(mode==='signal'?'Invalid stop-loss direction: BUY requires SL below entry; SELL requires SL above entry. The reference distance is still shown.':'Target risk must exceed estimated fees. Check entry, lot size and exchange rate.');
  el('distance').value=Number.isFinite(priceDistance)&&priceDistance>0?priceDistance.toFixed(2):'';
- const rr=num('rr');const tp=valid&&rr>0?(side==='buy'?entry+priceDistance*rr:entry-priceDistance*rr):NaN;const tpValid=Number.isFinite(tp)&&tp>0;el('tpResult').textContent=tpValid?tp.toFixed(2):'—';el('tpNote').textContent=tpValid?rr+'R target · Price movement: US
+ const rr=num('rr');
+ const tp=valid&&rr>0?(side==='buy'?entry+priceDistance*rr:entry-priceDistance*rr):NaN;
+ const tpValid=Number.isFinite(tp)&&tp>0;
+ el('tpResult').textContent=tpValid?tp.toFixed(2):'—';
+ el('tpNote').textContent=tpValid?rr+'R target; TP distance: USD '+(priceDistance*rr).toFixed(2)+'; gross profit: '+cad(priceDistance*rr*lot*contract*rate):'TP unavailable until SL and direction are valid.';
+ el('tradeLoss').textContent=valid?cad(tradeLoss):'—';
  el('riskPct').textContent=valid&&fund>0?(tradeLoss/fund*100).toFixed(2)+'%':'—';
  const used=valid?state.losses*tradeLoss+Math.max(0,num('realized')||0):Math.max(0,num('realized')||0);
  const remaining=Math.max(0,limit-used);
@@ -64,32 +69,6 @@ function update(){
  el('riskWarning').textContent=!valid&&mode==='signal'?'Check your Telegram signal direction and SL price before placing the trade.':valid&&mode==='signal'&&tradeLoss>target?'Signal exceeds target risk by '+cad(tradeLoss-target)+'. Reduce lot size or skip the trade.':'';
  el('warning').textContent=valid&&tradeLoss>remaining?'Another full loss would exceed your daily limit.':'';
  summary='Gold Risk Manager\nMode: '+mode+'\nInstrument: '+(btc?'BTCUSD':'XAUUSD')+'\nDirection: '+side.toUpperCase()+'\nEntry: '+entry+'\nSL: '+(valid?sl.toFixed(2):'Invalid')+'\nLot: '+lot+'\nTP: '+(tpValid?tp.toFixed(2):'N/A')+'\nR:R 1:'+rr+'\nEstimated loss: '+(valid?cad(tradeLoss):'N/A')+'\nRemaining daily budget: '+cad(remaining);
- try{localStorage.setItem('goldRiskV3',JSON.stringify({...Object.fromEntries(ids.filter(id=>id!=='distance').map(id=>[id,el(id).value])),...state}))}catch(e){}
-}
-ids.filter(id=>id!=='distance').forEach(id=>{el(id).addEventListener('input',update);el(id).addEventListener('change',update)});
-el('asset').addEventListener('change',()=>{el('entry').value=el('asset').value==='btc'?'76281':'4060';el('signalSL').value=el('asset').value==='btc'?'76000':'4080';update()});
-el('plus').onclick=()=>{state.losses++;update()};
-el('minus').onclick=()=>{state.losses=Math.max(0,state.losses-1);update()};
-el('reset').onclick=()=>{if(confirm('Reset today’s tracker?')){state.losses=0;el('realized').value='0';state.date=today();update()}};
-el('copy').onclick=()=>navigator.clipboard.writeText(summary).then(()=>alert('Copied!')).catch(()=>alert('Copy unavailable'));
-update();
-</script></html>+(priceDistance*rr).toFixed(2)+' · Gross profit before fees: '+cad(priceDistance*rr*lot*contract*rate):'TP unavailable until the SL and direction are valid.';el('tradeLoss').textContent=valid?cad(tradeLoss):'—';
- el('riskPct').textContent=valid&&fund>0?(tradeLoss/fund*100).toFixed(2)+'%':'—';
- const used=valid?state.losses*tradeLoss+Math.max(0,num('realized')||0):Math.max(0,num('realized')||0);
- const remaining=Math.max(0,limit-used);
- const count=valid&&tradeLoss>0&&limit>=0?Math.floor((limit+1e-8)/tradeLoss):0;
- const additional=valid&&tradeLoss>0?Math.floor((remaining+1e-8)/tradeLoss):0;
- el('maxLosses').textContent=valid?count:'—';
- el('budget').textContent=Number.isFinite(limit)?cad(limit):'—';
- el('lossCount').textContent=state.losses;
- el('usedPct').textContent=limit>0?(used/limit*100).toFixed(1)+'%':'—';
- el('fill').style.width=(limit>0?Math.min(100,used/limit*100):0)+'%';
- el('used').textContent=cad(used);
- el('remaining').textContent=cad(remaining);
- el('additional').textContent=valid?additional:'—';
- el('riskWarning').textContent=!valid&&mode==='signal'?'Check your Telegram signal direction and SL price before placing the trade.':valid&&mode==='signal'&&tradeLoss>target?'Signal exceeds target risk by '+cad(tradeLoss-target)+'. Reduce lot size or skip the trade.':'';
- el('warning').textContent=valid&&tradeLoss>remaining?'Another full loss would exceed your daily limit.':'';
- summary='Gold Risk Manager\nMode: '+mode+'\nInstrument: '+(btc?'BTCUSD':'XAUUSD')+'\nDirection: '+side.toUpperCase()+'\nEntry: '+entry+'\nSL: '+(valid?sl.toFixed(2):'Invalid')+'\nLot: '+lot+'\nEstimated loss: '+(valid?cad(tradeLoss):'N/A')+'\nRemaining daily budget: '+cad(remaining);
  try{localStorage.setItem('goldRiskV3',JSON.stringify({...Object.fromEntries(ids.filter(id=>id!=='distance').map(id=>[id,el(id).value])),...state}))}catch(e){}
 }
 ids.filter(id=>id!=='distance').forEach(id=>{el(id).addEventListener('input',update);el(id).addEventListener('change',update)});
